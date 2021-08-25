@@ -55,7 +55,8 @@ namespace OneBot.CommandRoute.Models.VO
                     UniversalPath = UniversalPath,
                     HeartBeatTimeOut = TimeSpan.FromSeconds(HeartBeatTimeOut),
                     ApiTimeOut = TimeSpan.FromMilliseconds(ApiTimeOut),
-                    EnableSoraCommandManager = false
+                    EnableSoraCommandManager = false,
+                    AutoMarkMessageRead = false
                 },
                 "ws" => new ClientConfig
                 {
@@ -65,7 +66,8 @@ namespace OneBot.CommandRoute.Models.VO
                     UniversalPath = UniversalPath,
                     HeartBeatTimeOut = TimeSpan.FromSeconds(HeartBeatTimeOut),
                     ApiTimeOut = TimeSpan.FromMilliseconds(ApiTimeOut),
-                    EnableSoraCommandManager = false
+                    EnableSoraCommandManager = false,
+                    AutoMarkMessageRead = false
                 },
                 _ => throw new ArgumentException(@"There is something wrong in OneBot settings.")
             };

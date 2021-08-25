@@ -103,6 +103,10 @@ namespace OneBot.CommandRoute.Command
 
             foreach (var s in _command)
             {
+                if (s.Attribute.CanStop != canStop)
+                {
+                    return 0;
+                }
                 var ret = s.Invoke(scope, sender, e, oldParser);
                 if (ret != 0) return ret;
             }
