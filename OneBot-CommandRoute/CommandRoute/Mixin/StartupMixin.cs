@@ -13,11 +13,15 @@ namespace OneBot_CommandRoute.CommandRoute.Mixin
         /// 将 OneBot 服务注册到服务容器。包含：OneBot 服务、指令服务、CQ:Json 服务和日志服务。
         /// </summary>
         /// <param name="services"></param>
-        public static void ConfigureOneBot(this IServiceCollection services)
+        public static void ConfigureOneBot(this IServiceCollection services,long? testOnlyQQ)
         {   
             // OneBot
             services.AddSingleton<IBotService, BotService>();
-            
+
+            if (testOnlyQQ.HasValue)
+            {
+                CommandService._testOnleyQQ = testOnlyQQ.Value;
+            }
             // 指令路由服务
             services.AddSingleton<ICommandService, CommandService>();
             

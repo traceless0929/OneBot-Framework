@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using OneBot.CommandRoute.Models.VO;
 using Sora.Interfaces;
 using Sora.Net;
+using Sora.Net.Config;
 using Sora.OnebotModel;
 using YukariToolBox.FormatLog;
 

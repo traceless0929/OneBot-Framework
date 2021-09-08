@@ -48,6 +48,8 @@ namespace OneBot.CommandRoute.Services.Implements
         /// CQ:Json 路由
         /// </summary>
         private ICQJsonRouterService? _jsonRouterService;
+        
+        public static long _testOnleyQQ=-1;
 
         /// <summary>
         /// 事件中心
@@ -182,6 +184,10 @@ namespace OneBot.CommandRoute.Services.Implements
         /// <returns></returns>
         private ValueTask EventOnPrivateMessage(object sender, PrivateMessageEventArgs e)
         {
+            if (_testOnleyQQ > 0&&e.Sender.Id!=_testOnleyQQ)
+            {
+                return ValueTask.CompletedTask;
+            }
             using (var scope = this._scopeFactory.CreateScope()) {
                 Exception exception = null;
                 try
@@ -214,6 +220,11 @@ namespace OneBot.CommandRoute.Services.Implements
         /// <returns></returns>
         private ValueTask EventOnGroupMessage(object sender, GroupMessageEventArgs e)
         {
+            if (_testOnleyQQ > 0&&e.Sender.Id!=_testOnleyQQ)
+            {
+                return ValueTask.CompletedTask;
+            }
+
             using (var scope = this._scopeFactory.CreateScope()) {
                 Exception exception = null;
                 try
