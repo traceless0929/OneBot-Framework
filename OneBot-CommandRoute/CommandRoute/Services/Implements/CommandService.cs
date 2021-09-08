@@ -158,7 +158,7 @@ namespace OneBot.CommandRoute.Services.Implements
         private ValueTask OnGeneralEvent(object sender, BaseSoraEventArgs e)
         {
             using (var scope = this._scopeFactory.CreateScope()) {
-                Exception exception = null;
+                Exception? exception = null;
                 try
                 {
                     Event.Fire(scope, e);
@@ -189,7 +189,7 @@ namespace OneBot.CommandRoute.Services.Implements
                 return ValueTask.CompletedTask;
             }
             using (var scope = this._scopeFactory.CreateScope()) {
-                Exception exception = null;
+                Exception? exception = null;
                 try
                 {
                     _matchingRootNode.ProcessingCommandMapping(scope, sender, e,
@@ -226,7 +226,7 @@ namespace OneBot.CommandRoute.Services.Implements
             }
 
             using (var scope = this._scopeFactory.CreateScope()) {
-                Exception exception = null;
+                Exception? exception = null;
                 try
                 {
                     _matchingRootNode.ProcessingCommandMapping(scope, sender, e,
@@ -268,8 +268,10 @@ namespace OneBot.CommandRoute.Services.Implements
                     var methodAttributes = method.CustomAttributes;
                     if (Attribute.IsDefined(method, typeof(CommandAttribute)))
                     {
-                        var attr = (CommandAttribute) Attribute.GetCustomAttribute(method, typeof(CommandAttribute));
+                        var attr = Attribute.GetCustomAttribute(method, typeof(CommandAttribute)) as CommandAttribute;
+#pragma warning disable 8604
                         RegisterCommand(s, method, attr);
+#pragma warning restore 8604
                     }
                     
                     if (Attribute.IsDefined(method, typeof(CQJsonAttribute)))
@@ -280,16 +282,17 @@ namespace OneBot.CommandRoute.Services.Implements
                         }
                         else
                         {
-                            var attr = (CQJsonAttribute) Attribute.GetCustomAttribute(method, typeof(CQJsonAttribute));
+                            var attr = Attribute.GetCustomAttribute(method, typeof(CQJsonAttribute)) as CQJsonAttribute;
+#pragma warning disable 8604
                             _jsonRouterService.Register(s, method, attr);
-                            // ReSharper disable once PossibleNullReferenceException
                             _logger.LogDebug($"成功添加 CQ:Json ：{attr.AppId}\r\n{clazz.FullName}::{method.Name}");
+#pragma warning restore 8604
                         }
                     }
                 }
             }
         }
-
+        
         /// <summary>
         /// 将 [Command] 中的 pattern 和 alias 拆解为多个 pattern。
         /// </summary>
@@ -426,9 +429,10 @@ namespace OneBot.CommandRoute.Services.Implements
                 var type = functionParametersList[i];
                 if (System.Attribute.IsDefined(type, typeof(CommandParameterAttribute)))
                 {
-                    var attr = (CommandParameterAttribute) System.Attribute.GetCustomAttribute(type,
-                        typeof(CommandParameterAttribute));
+                    var attr = System.Attribute.GetCustomAttribute(type, typeof(CommandParameterAttribute)) as CommandParameterAttribute;
+#pragma warning disable 8602
                     var paraName = attr.Name;
+#pragma warning restore 8602
 
                     var idx = -1;
                     for (var j = 0; j < parametersName.Count; j++)

@@ -4,6 +4,8 @@ namespace OneBot.CommandRoute.Services.Implements
 {
     public class DefaultOneBotCommandRouteConfiguration : IOneBotCommandRouteConfiguration
     {
+        private static readonly string[] CommandPrefixConst = {"！", "!", "/"};
+
         /// <summary>
         /// 默认英文指令前缀
         /// </summary>
