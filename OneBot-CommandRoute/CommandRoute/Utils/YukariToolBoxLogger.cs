@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Text;
 using System.Threading;
 using Microsoft.Extensions.Logging;
@@ -52,6 +53,11 @@ namespace OneBot.CommandRoute.Utils
             Warning("Sora", "将在5s后自动退出");
             Thread.Sleep(5000);
             Environment.Exit(-1);
+        }
+
+        public void SetCultureInfo(CultureInfo cultureInfo)
+        {
+            return;
         }
     }
 }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
-using Sora.Enumeration;
 using Sora.EventArgs.SoraEvent;
 using Sora.Entities;
 using OneBot.CommandRoute.Services;
@@ -11,7 +10,9 @@ using OneBot.CommandRoute.Attributes;
 using OneBot.CommandRoute.Lexer;
 using OneBot.CommandRoute.Models.Enumeration;
 using OneBot.CommandRoute.Utils;
-using Sora.Entities.MessageElement;
+using Sora.Entities.Segment;
+using Sora.Entities.Segment.DataModel;
+using Sora.Enumeration;
 
 namespace OneBot.CommandRoute.Models.Entities
 {
@@ -280,9 +281,8 @@ namespace OneBot.CommandRoute.Models.Entities
         {
             result = null;
 
-            if (arg is string)
+            if (arg is string s)
             {
-                var s = arg as string;
                 try
                 {
                     return TryParseString(baseSoraEventArgs, s, type, out result);
@@ -293,12 +293,11 @@ namespace OneBot.CommandRoute.Models.Entities
                 }
             }
 
-            if (arg is CQCode)
+            if (arg is SoraSegment segment)
             {
-                var s = (CQCode)arg;
                 try
                 {
-                    return TryParseCQCode(baseSoraEventArgs, s, type, out result);
+                    return TryParseCQCode(baseSoraEventArgs, segment, type, out result);
                 }
                 catch (Exception)
                 {
@@ -306,12 +305,11 @@ namespace OneBot.CommandRoute.Models.Entities
                 }
             }
 
-            if (arg is MessageBody)
+            if (arg is MessageBody body)
             {
-                var s = (MessageBody)arg;
                 try
                 {
-                    return TryParseMessageBody(baseSoraEventArgs, s, type, out result);
+                    return TryParseMessageBody(baseSoraEventArgs, body, type, out result);
                 }
                 catch (Exception)
                 {
@@ -387,15 +385,15 @@ namespace OneBot.CommandRoute.Models.Entities
         {
             // ReSharper disable once RedundantAssignment
             bool ret = false;
-            if (type == ((CQCode)arg).DataObject.GetType())
+            if (type == ((SoraSegment)arg).Data.GetType())
             {
                 ret = true;
                 result = arg;
             }
-            else if (((CQCode)arg).MessageType == CQType.At)
+            else if (((SoraSegment)arg).MessageType == SegmentType.At)
             {
-                var cast = (Sora.Entities.MessageElement.CQModel.At) ((CQCode)arg).DataObject;
-                var succeed = long.TryParse(cast.Traget, out long uid);
+                var cast = (AtSegment) ((SoraSegment)arg).Data;
+                var succeed = long.TryParse(cast.Target, out var uid);
                 if (!succeed)
                 {
                     result = null;
