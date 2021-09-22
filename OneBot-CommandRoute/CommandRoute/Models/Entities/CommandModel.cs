@@ -10,6 +10,7 @@ using OneBot.CommandRoute.Services;
 using OneBot.CommandRoute.Attributes;
 using OneBot.CommandRoute.Lexer;
 using OneBot.CommandRoute.Models.Enumeration;
+using OneBot.CommandRoute.Utils;
 using Sora.Entities.MessageElement;
 
 namespace OneBot.CommandRoute.Models.Entities
@@ -133,12 +134,13 @@ namespace OneBot.CommandRoute.Models.Entities
                 // 解析一个新的
 
                 object? newArg = null;
+                // ReSharper disable once RedundantAssignment
                 bool succeed = false;
 
                 // 解析新的参数
                 try
                 {
-                    newArg = newParser.GetNext();
+                    newArg = newParser.GetNextNotBlank();
                     succeed = true;
                 }
                 catch (Exception)
@@ -248,10 +250,9 @@ namespace OneBot.CommandRoute.Models.Entities
             if (System.Attribute.IsDefined(CommandMethod, typeof(BeforeCommandAttribute)))
             {
                 var attrs = System.Attribute.GetCustomAttributes(CommandMethod, typeof(BeforeCommandAttribute));
-                if (attrs.Select(t => (t as BeforeCommandAttribute)?.Invoke(scope, baseSoraEventArgs)).Any(beforeReturn => beforeReturn.HasValue && !beforeReturn.Value))
+                for (int i = 0; i < attrs.Length; i++)
                 {
-                    //拦截一波，返回false 则不进行指令执行，拦截掉
-                    return 1;
+                    (attrs[i] as BeforeCommandAttribute)?.Invoke(scope, baseSoraEventArgs);
                 }
             }
 
@@ -305,6 +306,19 @@ namespace OneBot.CommandRoute.Models.Entities
                 }
             }
 
+            if (arg is MessageBody)
+            {
+                var s = (MessageBody)arg;
+                try
+                {
+                    return TryParseMessageBody(baseSoraEventArgs, s, type, out result);
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
+            }
+
             return false;
         }
 
@@ -316,8 +330,62 @@ namespace OneBot.CommandRoute.Models.Entities
         /// <param name="type">要 cast 的类型</param>
         /// <param name="result">cast 结果</param>
         /// <returns>真: 成功 / 假: 失败</returns>
+        private bool TryParseMessageBody(BaseSoraEventArgs baseSoraEventArgs, MessageBody arg, Type type, out object? result)
+        {
+            // ReSharper disable once RedundantAssignment
+            bool ret = false;
+            if (type == typeof(MessageBody))
+            {
+                ret = true;
+                result = arg;
+            }
+            else if (type == typeof(string))
+            {
+                ret = true;
+                result = arg.Serialize();
+            }
+            else
+            {
+                try
+                {
+                    var converter = type.GetMethod("op_Implicit", new[] {arg.GetType()});
+                    if (converter != null)
+                    {
+                        result = converter.Invoke(null, new[] {arg});
+                        // ReSharper disable once RedundantAssignment
+                        ret = true;
+                    }
+                    else
+                    {
+                        result = null;
+                        // ReSharper disable once RedundantAssignment
+                        ret = false;
+                    }
+                }
+                catch (Exception)
+                {
+                    result = null;
+                    // ReSharper disable once RedundantAssignment
+                    ret = false;
+                }
+                result = null;
+                return false;
+            }
+
+            return ret;
+        }
+        
+        /// <summary>
+        /// 尝试解析 CQ 码
+        /// </summary>
+        /// <param name="baseSoraEventArgs">Sora 事件对象</param>
+        /// <param name="arg">被 cast 的值</param>
+        /// <param name="type">要 cast 的类型</param>
+        /// <param name="result">cast 结果</param>
+        /// <returns>真: 成功 / 假: 失败</returns>
         private bool TryParseCQCode(BaseSoraEventArgs baseSoraEventArgs, object arg, Type type, out object? result)
         {
+            // ReSharper disable once RedundantAssignment
             bool ret = false;
             if (type == ((CQCode)arg).DataObject.GetType())
             {
@@ -355,17 +423,20 @@ namespace OneBot.CommandRoute.Models.Entities
                     if (converter != null)
                     {
                         result = converter.Invoke(null, new[] {arg});
+                        // ReSharper disable once RedundantAssignment
                         ret = true;
                     }
                     else
                     {
                         result = null;
+                        // ReSharper disable once RedundantAssignment
                         ret = false;
                     }
                 }
                 catch (Exception)
                 {
                     result = null;
+                    // ReSharper disable once RedundantAssignment
                     ret = false;
                 }
                 result = null;
@@ -385,6 +456,7 @@ namespace OneBot.CommandRoute.Models.Entities
         /// <returns>真: 成功 / 假: 失败</returns>
         private bool TryParseString(BaseSoraEventArgs baseSoraEventArgs, string? arg, Type type, out object? result)
         {
+            // ReSharper disable once RedundantAssignment
             bool ret = false;
 
             if (type == typeof(int) || type == typeof(int?))
