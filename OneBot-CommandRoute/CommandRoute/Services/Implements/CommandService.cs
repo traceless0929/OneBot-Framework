@@ -89,6 +89,7 @@ namespace OneBot.CommandRoute.Services.Implements
             _bot.SoraService.Event.OnGroupPoke += OnGeneralEvent;
             _bot.SoraService.Event.OnLuckyKingEvent += OnGeneralEvent;
             _bot.SoraService.Event.OnHonorEvent += OnGeneralEvent;
+            _bot.SoraService.Event.OnTitleUpdate += OnGeneralEvent; //
             _bot.SoraService.Event.OnOfflineFileEvent += OnGeneralEvent;
             _bot.SoraService.Event.OnClientStatusChangeEvent += OnGeneralEvent;
             _bot.SoraService.Event.OnEssenceChange += OnGeneralEvent;
@@ -111,7 +112,6 @@ namespace OneBot.CommandRoute.Services.Implements
         {
             using var scope = this._scopeFactory.CreateScope();
             Event.FireSelfMessage(scope, e);
-            ;
             return ValueTask.CompletedTask;
         }
 

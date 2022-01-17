@@ -1,10 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mime;
 using Sora.Entities;
-using Sora.Entities.Segment;
 using Sora.Entities.Segment.DataModel;
+using Sora.Entities.Segment;
 using Sora.Enumeration;
 
 namespace OneBot.CommandRoute.Lexer
@@ -17,12 +16,12 @@ namespace OneBot.CommandRoute.Lexer
         /// <summary>
         /// 空白字符
         /// </summary>
-        private const string BLANKCHARACTER = "\r\n\t ";
+        private const string BlankCharacter = "\r\n\t ";
         
         /// <summary>
         /// 引号
         /// </summary>
-        private const string QUOTECHARACTER = "\"\'";
+        private const string QuoteCharacter = "\"\'";
 
         /// <summary>
         /// 源信息
@@ -78,8 +77,7 @@ namespace OneBot.CommandRoute.Lexer
                 if (SourceCommand.Count < 2) return false;
                 scanObjectPointer = 1;
             }
-
-
+            
             string s;
             var flag = false;
 
@@ -128,7 +126,7 @@ namespace OneBot.CommandRoute.Lexer
                 s = ((TextSegment) (SourceCommand[scanObjectPointer].Data)).Content;
 
                 // 舍弃开头空白字符
-                while (scanStringPointer < s.Length && BLANKCHARACTER.Contains(s[scanStringPointer]))
+                while (scanStringPointer < s.Length && BlankCharacter.Contains(s[scanStringPointer]))
                 {
                     scanStringPointer++;
                 }
@@ -141,7 +139,7 @@ namespace OneBot.CommandRoute.Lexer
                 if (s.Length == 0) return false;
 
                 // 空白符号开头不合法
-                if (BLANKCHARACTER.Contains((s[0]))) return false;
+                if (BlankCharacter.Contains((s[0]))) return false;
             }
 
             ScanObjectPointer = scanObjectPointer;
@@ -239,10 +237,10 @@ namespace OneBot.CommandRoute.Lexer
             }
 
             // 文本参数
-            if (BLANKCHARACTER.Contains(str[ScanStringPointer]))
+            if (BlankCharacter.Contains(str[ScanStringPointer]))
             {
                 // 空白元素
-                while (BLANKCHARACTER.Contains(str[ScanStringPointer]))
+                while (BlankCharacter.Contains(str[ScanStringPointer]))
                 {
                     // 往后拼接
                     token += str[ScanStringPointer];
@@ -256,7 +254,7 @@ namespace OneBot.CommandRoute.Lexer
             else
             {
                 // 非空白元素
-                if (QUOTECHARACTER.Contains(str[ScanStringPointer]))
+                if (QuoteCharacter.Contains(str[ScanStringPointer]))
                 {
                     MessageBody multiElementsToken = new MessageBody();
                     var terminate = str[ScanStringPointer];
@@ -364,7 +362,7 @@ namespace OneBot.CommandRoute.Lexer
                 }
                 else
                 {
-                    while (!BLANKCHARACTER.Contains(str[ScanStringPointer]))
+                    while (!BlankCharacter.Contains(str[ScanStringPointer]))
                     {
                         // 往后拼接
                         token += str[ScanStringPointer];
@@ -404,7 +402,7 @@ namespace OneBot.CommandRoute.Lexer
 
             if (ScanStringPointer != 0)
             {
-                ret.Add(((TextSegment) (SourceCommand[ScanObjectPointer].Data)).Content[ScanStringPointer..]);
+                ret.Add(((TextSegment) (SourceCommand[ScanObjectPointer].Data)).Content.Substring(ScanStringPointer));
             }
             else
             {

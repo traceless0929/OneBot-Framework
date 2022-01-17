@@ -9,6 +9,8 @@ using OneBot.CommandRoute.Services;
 using OneBot.CommandRoute.Attributes;
 using OneBot.CommandRoute.Lexer;
 using OneBot.CommandRoute.Models.Enumeration;
+using Sora.Entities.Segment;
+using Sora.Util;
 using OneBot.CommandRoute.Utils;
 using Sora.Entities.Segment;
 using Sora.Entities.Segment.DataModel;
@@ -281,8 +283,9 @@ namespace OneBot.CommandRoute.Models.Entities
         {
             result = null;
 
-            if (arg is string s)
+            if (arg is string)
             {
+                var s = arg as string;
                 try
                 {
                     return TryParseString(baseSoraEventArgs, s, type, out result);
@@ -293,11 +296,12 @@ namespace OneBot.CommandRoute.Models.Entities
                 }
             }
 
-            if (arg is SoraSegment segment)
+            if (arg is SoraSegment)
             {
+                var s = (SoraSegment)arg;
                 try
                 {
-                    return TryParseCQCode(baseSoraEventArgs, segment, type, out result);
+                    return TryParseCQCode(baseSoraEventArgs, s, type, out result);
                 }
                 catch (Exception)
                 {
@@ -305,11 +309,12 @@ namespace OneBot.CommandRoute.Models.Entities
                 }
             }
 
-            if (arg is MessageBody body)
+            if (arg is MessageBody)
             {
+                var s = (MessageBody)arg;
                 try
                 {
-                    return TryParseMessageBody(baseSoraEventArgs, body, type, out result);
+                    return TryParseMessageBody(baseSoraEventArgs, s, type, out result);
                 }
                 catch (Exception)
                 {
@@ -392,8 +397,8 @@ namespace OneBot.CommandRoute.Models.Entities
             }
             else if (((SoraSegment)arg).MessageType == SegmentType.At)
             {
-                var cast = (AtSegment) ((SoraSegment)arg).Data;
-                var succeed = long.TryParse(cast.Target, out var uid);
+                var cast = ( Sora.Entities.Segment.DataModel.AtSegment) ((SoraSegment)arg).Data;
+                var succeed = long.TryParse(cast.Target, out long uid);
                 if (!succeed)
                 {
                     result = null;
