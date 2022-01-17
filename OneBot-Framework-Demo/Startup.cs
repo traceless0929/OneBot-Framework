@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using OneBot.CommandRoute.Mixin;
+using OneBot_CommandRoute.CommandRoute.Mixin;
 using OneBot.CommandRoute.Models.VO;
 using OneBot.CommandRoute.Services;
 using OneBot.FrameworkDemo.Modules;
@@ -26,7 +26,7 @@ namespace OneBot.FrameworkDemo
             // 配置机器人核心
             // 设置 OneBot 配置
             services.Configure<CQHttpServerConfigModel>(Configuration.GetSection("CQHttpConfig"));
-            services.ConfigureOneBot();
+            services.ConfigureOneBot(null);
 
             // 添加指令 / 事件
             // 推荐使用单例模式（而实际上框架代码也是当单例模式使用的）
