@@ -3,6 +3,7 @@ using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OneBot.CommandRoute.Models;
 using OneBot.CommandRoute.Services;
 using Sora.Entities.Segment;
 using Sora.Entities.Segment.DataModel;
@@ -14,11 +15,6 @@ namespace OneBot.CommandRoute.OneBotControllers
     public class CQJsonRouterController: IOneBotController
     {
         /// <summary>
-        /// 服务容器
-        /// </summary>
-        private readonly IServiceProvider _serviceProvider;
-
-        /// <summary>
         /// 路由服务
         /// </summary>
         private readonly ICQJsonRouterService _routeService;
@@ -27,7 +23,6 @@ namespace OneBot.CommandRoute.OneBotControllers
         public CQJsonRouterController(ICommandService commandService, IServiceProvider serviceProvider)
 #pragma warning restore 8618
         {
-            _serviceProvider = serviceProvider;
             var routeService = serviceProvider.GetService<ICQJsonRouterService>();
             if (routeService != null)
             {
@@ -37,19 +32,21 @@ namespace OneBot.CommandRoute.OneBotControllers
             }
         }
 
-        private int EventOnGroupMessageReceived(IServiceScope scope, GroupMessageEventArgs eventArgs)
+        private int EventOnGroupMessageReceived(OneBotContext scope)
         {
+            var eventArgs = scope.WrapSoraEventArgs<GroupMessageEventArgs>();
             var p = eventArgs.Message.MessageBody.FirstOrDefault();
             return p == default ? 0 : UniversalProcess(scope, eventArgs, p);
         }
 
-        private int EventOnPrivateMessageReceived(IServiceScope scope, PrivateMessageEventArgs eventArgs)
+        private int EventOnPrivateMessageReceived(OneBotContext scope)
         {
+            var eventArgs = scope.WrapSoraEventArgs<PrivateMessageEventArgs>();
             var p = eventArgs.Message.MessageBody.FirstOrDefault();
             return p == default ? 0 : UniversalProcess(scope, eventArgs, p);
         }
 
-        private int UniversalProcess(IServiceScope scope, BaseSoraEventArgs eventArgs, SoraSegment firstElement)
+        private int UniversalProcess(OneBotContext scope, BaseSoraEventArgs eventArgs, SoraSegment firstElement)
         {
             var process = false;
             var appid = "";

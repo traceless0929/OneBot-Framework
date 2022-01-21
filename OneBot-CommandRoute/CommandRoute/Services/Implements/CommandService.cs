@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using OneBot.CommandRoute.Attributes;
 using OneBot.CommandRoute.Command;
 using OneBot.CommandRoute.Events;
-using OneBot.CommandRoute.Lexer;
 using OneBot.CommandRoute.Models.Entities;
 using Sora.EventArgs.SoraEvent;
 using System;
@@ -11,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using OneBot.CommandRoute.Models;
 
 namespace OneBot.CommandRoute.Services.Implements
 {
@@ -19,11 +19,6 @@ namespace OneBot.CommandRoute.Services.Implements
     /// </summary>
     public class CommandService : ICommandService
     {
-        /// <summary>
-        /// 机器人服务
-        /// </summary>
-        private readonly IBotService _bot;
-
         /// <summary>`
         /// 服务容器
         /// </summary>
@@ -35,11 +30,6 @@ namespace OneBot.CommandRoute.Services.Implements
         private readonly MatchingNode _matchingRootNode;
 
         /// <summary>
-        /// Scope 工厂
-        /// </summary>
-        private readonly IServiceScopeFactory _scopeFactory;
-
-        /// <summary>
         /// 日志
         /// </summary>
         private ILogger<CommandService> _logger;
@@ -48,56 +38,47 @@ namespace OneBot.CommandRoute.Services.Implements
         /// CQ:Json 路由
         /// </summary>
         private ICQJsonRouterService? _jsonRouterService;
-        
-        public static long _testOnleyQQ=-1;
 
         /// <summary>
         /// 事件中心
         /// </summary>
         public EventManager Event { get; set; }
 
-        public CommandService(IBotService bot, IServiceProvider serviceProvider, IServiceScopeFactory scopeFactory,
-            ILogger<CommandService> logger)
+        public CommandService(IServiceProvider serviceProvider, ILogger<CommandService> logger)
         {
-            _bot = bot;
             _serviceProvider = serviceProvider;
             _jsonRouterService = _serviceProvider.GetService<ICQJsonRouterService>();
-            _scopeFactory = scopeFactory;
             _logger = logger;
             Event = new EventManager();
 
-            var routeConfiguration = serviceProvider.GetService<IOneBotCommandRouteConfiguration>() ?? new DefaultOneBotCommandRouteConfiguration();
-            _matchingRootNode = new MatchingNode(routeConfiguration) {IsRoot = true};
+            var routeConfiguration = serviceProvider.GetService<IOneBotCommandRouteConfiguration>() ??
+                                     new DefaultOneBotCommandRouteConfiguration();
+            _matchingRootNode = new MatchingNode(routeConfiguration) { IsRoot = true };
         }
 
-        /// <summary>
-        /// 注册消息处理事件
-        /// </summary>
-        public void RegisterEventHandler()
-        {            
-            _bot.SoraService.Event.OnClientConnect += OnGeneralEvent;
-            _bot.SoraService.Event.OnGroupRequest += OnGeneralEvent;
-            _bot.SoraService.Event.OnFriendRequest += OnGeneralEvent;
-            _bot.SoraService.Event.OnFileUpload += OnGeneralEvent;
-            _bot.SoraService.Event.OnGroupAdminChange += OnGeneralEvent;
-            _bot.SoraService.Event.OnGroupMemberChange += OnGeneralEvent;
-            _bot.SoraService.Event.OnGroupMemberMute += OnGeneralEvent;
-            _bot.SoraService.Event.OnFriendAdd += OnGeneralEvent;
-            _bot.SoraService.Event.OnGroupRecall += OnGeneralEvent;
-            _bot.SoraService.Event.OnFriendRecall += OnGeneralEvent;
-            _bot.SoraService.Event.OnGroupCardUpdate += OnGeneralEvent;
-            _bot.SoraService.Event.OnGroupPoke += OnGeneralEvent;
-            _bot.SoraService.Event.OnLuckyKingEvent += OnGeneralEvent;
-            _bot.SoraService.Event.OnHonorEvent += OnGeneralEvent;
-            _bot.SoraService.Event.OnTitleUpdate += OnGeneralEvent; //
-            _bot.SoraService.Event.OnOfflineFileEvent += OnGeneralEvent;
-            _bot.SoraService.Event.OnClientStatusChangeEvent += OnGeneralEvent;
-            _bot.SoraService.Event.OnEssenceChange += OnGeneralEvent;
+        public ValueTask HandleEvent(OneBotContext oneBotContext)
+        {
+            var eventArgs = oneBotContext.SoraEventArgs;
 
-            _bot.SoraService.Event.OnGroupMessage += EventOnGroupMessage;
-            _bot.SoraService.Event.OnPrivateMessage += EventOnPrivateMessage;
-
-            _bot.SoraService.Event.OnSelfMessage += EventOnSelfMessage;
+            if (eventArgs is GroupMessageEventArgs groupMessageEventArgs)
+            {
+                if (groupMessageEventArgs.IsSelfMessage)
+                {
+                    return EventOnSelfMessage(oneBotContext);
+                }
+                else
+                {
+                    return EventOnGroupMessage(oneBotContext);
+                }
+            }
+            else if (eventArgs is PrivateMessageEventArgs)
+            {
+                return EventOnPrivateMessage(oneBotContext);
+            }
+            else
+            {
+                return OnGeneralEvent(oneBotContext);
+            }
         }
 
         #region 事件处理
@@ -105,73 +86,78 @@ namespace OneBot.CommandRoute.Services.Implements
         /// <summary>
         /// 登录账号发送消息事件
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="e"></param>
+        /// <param name="oneBotContext"></param>
         /// <returns></returns>
-        private ValueTask EventOnSelfMessage(string type, GroupMessageEventArgs e)
-        {
-            using var scope = this._scopeFactory.CreateScope();
-            Event.FireSelfMessage(scope, e);
+        private ValueTask EventOnSelfMessage(OneBotContext oneBotContext)
+        {     
+            Exception? exception = null;
+            try
+            {
+                Event.FireSelfMessage(oneBotContext);
+            }
+            catch (Exception e1)
+            {
+                exception = e1;
+            }
+
+            if (exception != null)
+            {
+                return EventOnException(oneBotContext, exception);
+            }
             return ValueTask.CompletedTask;
         }
 
         /// <summary>
         /// 异常处理
         /// </summary>
-        /// <param name="scope"></param>
-        /// <param name="e"></param>
+        /// <param name="oneBotContext"></param>
         /// <param name="exception"></param>
-        private void EventOnException(IServiceScope scope, BaseSoraEventArgs e, Exception exception)
+        public ValueTask EventOnException(OneBotContext oneBotContext, Exception exception)
         {
             try
             {
-                if (!Event.FireException(scope, e, exception))
+                if (!Event.FireException(oneBotContext, exception))
                 {
                     _logger.LogError(
                         $"{exception.Message} : \n" +
                         $"{exception.StackTrace}"
                     );
                 }
-
-                ;
             }
             catch (Exception e1)
             {
-                _logger.LogError(
-                    $"{exception.Message} : \n" +
-                    $"{exception.StackTrace}"
-                );
-
-                _logger.LogError(
-                    $"{e1.Message} : \n" +
-                    $"{e1.StackTrace}"
-                );
+                _logger.LogError(exception.Message, exception);
+                _logger.LogError(e1.Message, e1);
             }
+
+            return ValueTask.CompletedTask;
         }
 
         /// <summary>
         /// 通用事件
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="oneBotContext"></param>
         /// <returns></returns>
-        private ValueTask OnGeneralEvent(object sender, BaseSoraEventArgs e)
+        private ValueTask OnGeneralEvent(OneBotContext oneBotContext)
         {
-            using (var scope = this._scopeFactory.CreateScope()) {
-                Exception? exception = null;
-                try
-                {
-                    Event.Fire(scope, e);
-                }
-                catch (Exception e1)
-                {
-                    exception = e1;
-                }
-
-                if (exception != null) EventOnException(scope, e, exception);
+            Exception? exception = null;
+            try
+            {
+                Event.Fire(oneBotContext);
             }
+            catch (Exception e1)
+            {
+                exception = e1;
+            }
+
+            if (exception != null)
+            {
+                return EventOnException(oneBotContext, exception);
+            }
+
             return ValueTask.CompletedTask;
         }
+
         #endregion 事件处理
 
         #region 指令路由
@@ -179,73 +165,54 @@ namespace OneBot.CommandRoute.Services.Implements
         /// <summary>
         /// 私聊消息分发
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="oneBotContext"></param>
         /// <returns></returns>
-        private ValueTask EventOnPrivateMessage(object sender, PrivateMessageEventArgs e)
+        private ValueTask EventOnPrivateMessage(OneBotContext oneBotContext)
         {
-            if (_testOnleyQQ > 0&&e.Sender.Id!=_testOnleyQQ)
+            Exception? exception = null;
+            try
             {
-                return ValueTask.CompletedTask;
+                if (Event.FirePrivateMessageReceived(oneBotContext) != 0) return ValueTask.CompletedTask;
+                if (_matchingRootNode.ProcessingCommandMapping(oneBotContext) != 0) return ValueTask.CompletedTask;
+                Event.Fire(oneBotContext);
             }
-            using (var scope = this._scopeFactory.CreateScope()) {
-                Exception? exception = null;
-                try
-                {
-                    _matchingRootNode.ProcessingCommandMapping(scope, sender, e,
-                        new CommandLexer(e.Message.MessageBody), false);
-                    if (Event.FirePrivateMessageReceived(scope, e) != 0)
-                    {
-                        return ValueTask.CompletedTask;
-                    }
-                    if (_matchingRootNode.ProcessingCommandMapping(scope, sender, e,
-                        new CommandLexer(e.Message.MessageBody)) != 0) return ValueTask.CompletedTask;
-                    Event.Fire(scope, e);
-                }
-                catch (Exception e1)
-                {
-                    exception = e1;
-                }
+            catch (Exception e1)
+            {
+                exception = e1;
+            }
 
-                if (exception != null) EventOnException(scope, e, exception);
+            if (exception != null)
+            {
+                return EventOnException(oneBotContext, exception);
             }
+
             return ValueTask.CompletedTask;
         }
 
         /// <summary>
         /// 群聊消息分发
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="oneBotContext"></param>
         /// <returns></returns>
-        private ValueTask EventOnGroupMessage(object sender, GroupMessageEventArgs e)
+        private ValueTask EventOnGroupMessage(OneBotContext oneBotContext)
         {
-            if (_testOnleyQQ > 0&&e.Sender.Id!=_testOnleyQQ)
+            Exception? exception = null;
+            try
             {
-                return ValueTask.CompletedTask;
+                if (Event.FireGroupMessageReceived(oneBotContext) != 0) return ValueTask.CompletedTask;
+                if (_matchingRootNode.ProcessingCommandMapping(oneBotContext) != 0) return ValueTask.CompletedTask;
+                Event.Fire(oneBotContext);
+            }
+            catch (Exception e1)
+            {
+                exception = e1;
             }
 
-            using (var scope = this._scopeFactory.CreateScope()) {
-                Exception? exception = null;
-                try
-                {
-                    _matchingRootNode.ProcessingCommandMapping(scope, sender, e,
-                        new CommandLexer(e.Message.MessageBody),false);
-                    if (Event.FireGroupMessageReceived(scope, e) != 0)
-                    {
-                        return ValueTask.CompletedTask;
-                    }
-                    if (_matchingRootNode.ProcessingCommandMapping(scope, sender, e,
-                        new CommandLexer(e.Message.MessageBody)) != 0) return ValueTask.CompletedTask;
-                    Event.Fire(scope, e);
-                }
-                catch (Exception e1)
-                {
-                    exception = e1;
-                }
-
-                if (exception != null) EventOnException(scope, e, exception);
+            if (exception != null)
+            {
+                return EventOnException(oneBotContext, exception);
             }
+
             return ValueTask.CompletedTask;
         }
 
@@ -265,7 +232,6 @@ namespace OneBot.CommandRoute.Services.Implements
                 var methods = clazz.GetMethods();
                 foreach (var method in methods)
                 {
-                    var methodAttributes = method.CustomAttributes;
                     if (Attribute.IsDefined(method, typeof(CommandAttribute)))
                     {
                         var attr = Attribute.GetCustomAttribute(method, typeof(CommandAttribute)) as CommandAttribute;
@@ -273,7 +239,7 @@ namespace OneBot.CommandRoute.Services.Implements
                         RegisterCommand(s, method, attr);
 #pragma warning restore 8604
                     }
-                    
+
                     if (Attribute.IsDefined(method, typeof(CQJsonAttribute)))
                     {
                         if (_jsonRouterService == null)
@@ -292,7 +258,7 @@ namespace OneBot.CommandRoute.Services.Implements
                 }
             }
         }
-        
+
         /// <summary>
         /// 将 [Command] 中的 pattern 和 alias 拆解为多个 pattern。
         /// </summary>
@@ -417,19 +383,18 @@ namespace OneBot.CommandRoute.Services.Implements
 
                 parametersMatchingType.Add(0);
                 parametersName.Add(s);
+                // ReSharper disable once RedundantJumpStatement
                 continue;
             }
-
-            ;
 
             // 先检查属性
             var functionParametersList = commandMethod.GetParameters();
             for (var i = 0; i < functionParametersList.Length; i++)
             {
                 var type = functionParametersList[i];
-                if (System.Attribute.IsDefined(type, typeof(CommandParameterAttribute)))
+                if (Attribute.IsDefined(type, typeof(CommandParameterAttribute)))
                 {
-                    var attr = System.Attribute.GetCustomAttribute(type, typeof(CommandParameterAttribute)) as CommandParameterAttribute;
+                    var attr = Attribute.GetCustomAttribute(type, typeof(CommandParameterAttribute)) as CommandParameterAttribute;
 #pragma warning disable 8602
                     var paraName = attr.Name;
 #pragma warning restore 8602
@@ -481,8 +446,7 @@ namespace OneBot.CommandRoute.Services.Implements
                     parametersType, parametersMatchingType, parametersName, parameterPositionMapping,
                     attribute)
                 , 0);
-            _logger.LogDebug($"成功添加指令：{string.Join(", ", matchPattern.ToArray())}\r\n{commandObj.GetType().FullName}::{commandMethod.Name}::{attribute.CanStop}");
-            Console.WriteLine($"成功添加指令：{string.Join(", ", matchPattern.ToArray())}\r\n{commandObj.GetType().FullName}::{commandMethod.Name}::{attribute.CanStop}");
+            _logger.LogDebug($"成功添加指令：{string.Join(", ", matchPattern.ToArray())}\r\n{commandObj.GetType().FullName}::{commandMethod.Name}");
         }
 
         #endregion 注册指令

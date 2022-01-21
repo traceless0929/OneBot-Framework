@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using OneBot.CommandRoute.Attributes;
@@ -25,7 +23,6 @@ namespace OneBot.CommandRoute.Models.Entities
         /// </summary>
         public CQJsonAttribute Attribute { get; private set; }
         
-        
         public CQJsonRouteModel(IOneBotController commandObj, MethodInfo commandMethod, CQJsonAttribute attribute)
         {
             CommandObj = commandObj;
@@ -33,7 +30,7 @@ namespace OneBot.CommandRoute.Models.Entities
             Attribute = attribute;
         }
 
-        public int Invoke(IServiceScope scope, BaseSoraEventArgs baseSoraEventArgs)
+        public int Invoke(OneBotContext context, BaseSoraEventArgs baseSoraEventArgs)
         {
             var functionParametersList = CommandMethod.GetParameters();
             object?[] functionArgs = new object[functionParametersList.Length];
@@ -68,22 +65,27 @@ namespace OneBot.CommandRoute.Models.Entities
                 // 判断是否需要传递 Scope 信息
                 if (parameterType == typeof(IServiceScope))
                 {
-                    functionArgs[i] = scope;
+                    functionArgs[i] = context.ServiceScope;
+                    continue;
+                }
+                
+                if (parameterType == typeof(OneBotContext))
+                {
+                    functionArgs[i] = context;
                     continue;
                 }
 
                 // 从 Scope 中获得参数
-                functionArgs[i] = scope.ServiceProvider.GetService(parameterType);
+                functionArgs[i] = context.ServiceScope.ServiceProvider.GetService(parameterType);
             }
             
             // 在调用前执行
             if (System.Attribute.IsDefined(CommandMethod, typeof(BeforeCommandAttribute)))
             {
                 var attrs = System.Attribute.GetCustomAttributes(CommandMethod, typeof(BeforeCommandAttribute));
-                if (attrs.Select(t => (t as BeforeCommandAttribute)?.Invoke(scope, baseSoraEventArgs)).Any(beforeReturn => beforeReturn.HasValue && !beforeReturn.Value))
+                for (int i = 0; i < attrs.Length; i++)
                 {
-                    //拦截一波，返回false 则不进行指令执行，拦截掉
-                    return 1;
+                    (attrs[i] as BeforeCommandAttribute)?.Invoke(context);
                 }
             }
 

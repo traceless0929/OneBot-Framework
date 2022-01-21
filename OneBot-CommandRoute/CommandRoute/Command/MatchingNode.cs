@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using OneBot.CommandRoute.Lexer;
+using OneBot.CommandRoute.Models;
 using OneBot.CommandRoute.Models.Entities;
 using OneBot.CommandRoute.Services;
 using Sora.EventArgs.SoraEvent;
@@ -50,23 +51,38 @@ namespace OneBot.CommandRoute.Command
         {
             this._configuration = configuration;
         }
-        
+
         /// <summary>
         /// 处理指令匹配
         /// </summary>
-        /// <param name="scope">事件上下文</param>
+        /// <param name="context">事件上下文</param>
         /// <param name="sender">事件触发者</param>
-        /// <param name="e">Sora 事件对象</param>
-        /// <param name="lexer">指令解析器</param>
-        /// /// <param name="canStop">处理那种指令 可拦截/不可拦截</param>
         /// <returns>0 继续 / 1 阻断</returns>
-        public int ProcessingCommandMapping(IServiceScope scope, object sender, BaseSoraEventArgs e, CommandLexer lexer,bool canStop=true)
+        public int ProcessingCommandMapping(OneBotContext context)
+        {
+            var eventArgs = context.SoraEventArgs;
+
+            CommandLexer? lexer = eventArgs switch
+            {
+                GroupMessageEventArgs groupMessageEventArgs => new CommandLexer(groupMessageEventArgs.Message.MessageBody),
+                PrivateMessageEventArgs privateMessageEventArgs => new CommandLexer(privateMessageEventArgs.Message.MessageBody),
+                _ => null
+            };
+
+            return lexer == null ? 0 : ProcessingCommandMapping(context, lexer);
+        }
+
+
+        /// <summary>
+        /// 处理指令匹配
+        /// </summary>
+        /// <param name="context">事件上下文</param>
+        /// <param name="lexer">指令解析器</param>
+        /// <returns>0 继续 / 1 阻断</returns>
+        public int ProcessingCommandMapping(OneBotContext context, CommandLexer lexer)
         {
             if (!lexer.IsValid()) return 0;
-            if (!IsRoot&&_command.Count>0&&_command.All(p => p.Attribute.CanStop != canStop))
-            {
-                return 0;
-            }
+
             var oldParser = lexer.Clone();
 
             object? nextToken = null;
@@ -96,18 +112,14 @@ namespace OneBot.CommandRoute.Command
                         if (nextStepForComparing != tokenForComparing) continue;
                     }
 
-                    var ret = s.Value.ProcessingCommandMapping(scope, sender, e, lexer,canStop);
+                    var ret = s.Value.ProcessingCommandMapping(context, lexer);
                     if (ret != 0) return ret;
                 }
             }
 
             foreach (var s in _command)
             {
-                if (s.Attribute.CanStop != canStop)
-                {
-                    return 0;
-                }
-                var ret = s.Invoke(scope, sender, e, oldParser);
+                var ret = s.Invoke(context, oldParser);
                 if (ret != 0) return ret;
             }
 
