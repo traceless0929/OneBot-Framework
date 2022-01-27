@@ -100,13 +100,8 @@ namespace OneBot.CommandRoute.Command
                     if (ret != 0) return ret;
                 }
             }
-
-            foreach (var s in _command)
+            foreach (var s in _command.Where(p=>p.Attribute.CanStop==canStop))
             {
-                if (s.Attribute.CanStop != canStop)
-                {
-                    return 0;
-                }
                 var ret = s.Invoke(scope, sender, e, oldParser);
                 if (ret != 0) return ret;
             }
