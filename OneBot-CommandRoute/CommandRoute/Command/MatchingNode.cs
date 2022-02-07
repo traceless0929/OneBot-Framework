@@ -100,13 +100,7 @@ namespace OneBot.CommandRoute.Command
                     if (ret != 0) return ret;
                 }
             }
-            foreach (var s in _command.Where(p=>p.Attribute.CanStop==canStop))
-            {
-                var ret = s.Invoke(scope, sender, e, oldParser);
-                if (ret != 0) return ret;
-            }
-
-            return 0;
+            return _command.Where(p => p.Attribute.CanStop == canStop).Select(s => s.Invoke(scope, sender, e, oldParser)).FirstOrDefault(ret => ret != 0);
         }
 
         /// <summary>
