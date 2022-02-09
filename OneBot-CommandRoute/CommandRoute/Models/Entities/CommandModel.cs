@@ -11,9 +11,6 @@ using OneBot.CommandRoute.Lexer;
 using OneBot.CommandRoute.Models.Enumeration;
 using Sora.Entities.Segment;
 using Sora.Util;
-using OneBot.CommandRoute.Utils;
-using Sora.Entities.Segment;
-using Sora.Entities.Segment.DataModel;
 using Sora.Enumeration;
 
 namespace OneBot.CommandRoute.Models.Entities
