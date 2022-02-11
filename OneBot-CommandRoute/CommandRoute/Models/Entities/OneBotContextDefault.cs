@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,8 +20,7 @@ public class OneBotContextDefault : OneBotContext
     /// <returns></returns>
     public override T WrapSoraEventArgs<T>()
     {
-        var ret = SoraEventArgs as T;
-        if (ret == null)
+        if (SoraEventArgs is not T ret)
         {
             throw new ArgumentException($"SoraEventArgs is not an instance of {typeof(T).Name}", $"SoraEventArgs");
         }
@@ -39,7 +38,6 @@ public class OneBotContextDefault : OneBotContext
     public override IDictionary<object, object?> Items { get; protected set; } =
         new ConcurrentDictionary<object, object?>();
 
-
     internal void SetSoraEventArgs(BaseSoraEventArgs e)
     {
         SoraEventArgs = e;
@@ -53,6 +51,7 @@ public class OneBotContextDefault : OneBotContext
     /// <summary>
     /// Sora Sender
     /// </summary>
+    // ReSharper disable once MemberCanBePrivate.Global
     public object Sender { get; private set; } = "";
 
     internal void SetSoraEventSender(object sender)

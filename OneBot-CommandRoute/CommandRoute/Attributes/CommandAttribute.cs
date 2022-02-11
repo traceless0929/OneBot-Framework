@@ -28,6 +28,7 @@ namespace OneBot.CommandRoute.Attributes
         /// 是否可以被拦截
         /// </summary>
         public bool CanStop { get; set; } = true;
+        
         /// <summary>
         /// 指令路由
         /// </summary>

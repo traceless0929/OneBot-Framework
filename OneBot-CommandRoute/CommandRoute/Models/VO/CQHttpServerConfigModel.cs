@@ -2,7 +2,6 @@ using System;
 using Newtonsoft.Json;
 using Sora.Interfaces;
 using Sora.Net.Config;
-using Sora.OnebotModel;
 
 namespace OneBot.CommandRoute.Models.VO
 {
@@ -56,8 +55,7 @@ namespace OneBot.CommandRoute.Models.VO
                     UniversalPath = UniversalPath,
                     HeartBeatTimeOut = TimeSpan.FromSeconds(HeartBeatTimeOut),
                     ApiTimeOut = TimeSpan.FromMilliseconds(ApiTimeOut),
-                    EnableSoraCommandManager = false,
-                    AutoMarkMessageRead = false
+                    EnableSoraCommandManager = false
                 },
                 "ws" => new ClientConfig
                 {
@@ -67,9 +65,7 @@ namespace OneBot.CommandRoute.Models.VO
                     UniversalPath = UniversalPath,
                     HeartBeatTimeOut = TimeSpan.FromSeconds(HeartBeatTimeOut),
                     ApiTimeOut = TimeSpan.FromMilliseconds(ApiTimeOut),
-                    EnableSoraCommandManager = false,
-                    AutoMarkMessageRead = false,
-                    
+                    EnableSoraCommandManager = false
                 },
                 _ => throw new ArgumentException(@"There is something wrong in OneBot settings.")
             };

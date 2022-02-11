@@ -1,11 +1,10 @@
 using System;
 
-namespace OneBot.CommandRoute.Events
+namespace OneBot.CommandRoute.Events;
+
+internal class EventHandleException : Exception
 {
-    class EventHandleException : Exception
+    public EventHandleException(string msg) : base(msg)
     {
-        public EventHandleException(string msg) : base(msg)
-        {
-        }
     }
 }
