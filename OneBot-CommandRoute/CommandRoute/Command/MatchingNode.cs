@@ -77,7 +77,7 @@ public class MatchingNode
     /// <param name="context">事件上下文</param>
     /// <param name="lexer">指令解析器</param>
     /// <returns>0 继续 / 1 阻断</returns>
-    private int ProcessingCommandMapping(OneBotContext context, CommandLexer lexer)
+    private int ProcessingCommandMapping(OneBotContext context, CommandLexer lexer,bool canStop=true)
     {
         if (!lexer.IsValid()) return 0;
 
@@ -115,18 +115,20 @@ public class MatchingNode
                     if (nextStepForComparing != tokenForComparing) continue;
                 }
 
-                var ret = s.Value.ProcessingCommandMapping(context, lexer);
+                var ret = s.Value.ProcessingCommandMapping(context, lexer,canStop);
                 if (ret != 0) return ret;
             }
         }
 
-        foreach (var s in _command)
-        {
-            var ret = s.Invoke(context, oldParser);
-            if (ret != 0) return ret;
-        }
-
-        return 0;
+        // foreach (var s in _command)
+        // {
+        //     var ret = s.Invoke(context, oldParser);
+        //     if (ret != 0) return ret;
+        // }
+        //
+        // return 0;
+        
+        return _command.Where(p => p.Attribute.CanStop == canStop).Select(s => s.Invoke(context, oldParser)).FirstOrDefault(ret => ret != 0);
     }
 
     /// <summary>

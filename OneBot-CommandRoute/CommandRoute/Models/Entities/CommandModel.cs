@@ -274,8 +274,16 @@ public class CommandModel
                 var operationName = t.GetType().FullName ?? "?";
                 var activity = ActivitySource.CreateActivity(operationName, ActivityKind.Internal) ?? new Activity(operationName);
                 activity.Start();
-                (t as BeforeCommandAttribute)?.Invoke(context);
-                activity.Stop();
+                var isContinue = (t as BeforeCommandAttribute)?.Invoke(context);
+                if (isContinue.HasValue&&isContinue.Value)
+                {
+                    activity.Stop();
+                }
+                else
+                {
+                    activity.Stop();
+                    return 1;
+                }
             }
         }
 

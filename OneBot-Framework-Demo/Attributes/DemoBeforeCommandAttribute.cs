@@ -14,19 +14,19 @@ namespace OneBot.FrameworkDemo.Attributes;
 /// </summary>
 public class DemoBeforeCommandAttribute : BeforeCommandAttribute
 {
-    public override void Invoke(OneBotContext context)
+    public override bool Invoke(OneBotContext context)
     {
         IServiceScope scope = context.ServiceScope;
         BaseSoraEventArgs baseSoraEventArgs = context.SoraEventArgs;
 
-        if (baseSoraEventArgs is not GroupMessageEventArgs p) return;
+        if (baseSoraEventArgs is not GroupMessageEventArgs p) return false;
 
         var taskValue = p.SoraApi.GetGroupMemberInfo(p.SourceGroup, p.Sender.Id, true).AsTask();
         taskValue.Wait();
 
         if (taskValue.Result.apiStatus.RetCode != ApiStatusType.Ok)
         {
-            return;
+            return false;
         }
 
         GroupMemberInfo uInfo = taskValue.Result.memberInfo;
@@ -39,5 +39,6 @@ public class DemoBeforeCommandAttribute : BeforeCommandAttribute
         {
             Console.WriteLine($"发送者 {uInfo.UserId} 不是管理员");
         }
+        return true;
     }
 }
