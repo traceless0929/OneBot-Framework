@@ -185,6 +185,7 @@ public class CommandService : ICommandService
     {
         try
         {
+            if (_matchingRootNode.ProcessingCommandMapping(oneBotContext,false) != 0) return ValueTask.CompletedTask;
             if (Event.FirePrivateMessageReceived(oneBotContext) != 0) return ValueTask.CompletedTask;
             if (_matchingRootNode.ProcessingCommandMapping(oneBotContext) != 0) return ValueTask.CompletedTask;
             Event.Fire(oneBotContext);
@@ -205,6 +206,7 @@ public class CommandService : ICommandService
     {
         try
         {
+            if (_matchingRootNode.ProcessingCommandMapping(oneBotContext,false) != 0) return ValueTask.CompletedTask;
             if (Event.FireGroupMessageReceived(oneBotContext) != 0) return ValueTask.CompletedTask;
             if (_matchingRootNode.ProcessingCommandMapping(oneBotContext) != 0) return ValueTask.CompletedTask;
             Event.Fire(oneBotContext);
@@ -436,8 +438,7 @@ public class CommandService : ICommandService
                 parametersType, parametersMatchingType, parametersName, parameterPositionMapping,
                 attribute)
             , 0);
-        _logger.LogDebug("成功添加指令：{matchPattern}\r\n{commandType}::{commandMethod}",
-            string.Join(", ", matchPattern.ToArray()), commandObj.GetType().FullName, commandMethod.Name);
+        Console.WriteLine($"成功添加指令：{string.Join(", ", matchPattern.ToArray())}\r\n{commandObj.GetType().FullName}::{commandMethod.Name}");
     }
 
         #endregion 注册指令

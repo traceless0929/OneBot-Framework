@@ -56,7 +56,7 @@ public class MatchingNode
     /// </summary>
     /// <param name="context">事件上下文</param>
     /// <returns>0 继续 / 1 阻断</returns>
-    public int ProcessingCommandMapping(OneBotContext context)
+    public int ProcessingCommandMapping(OneBotContext context,bool canStop=true)
     {
         var eventArgs = context.SoraEventArgs;
 
@@ -67,7 +67,7 @@ public class MatchingNode
             _ => null
         };
 
-        return lexer == null ? 0 : ProcessingCommandMapping(context, lexer);
+        return lexer == null ? 0 : ProcessingCommandMapping(context, lexer,canStop);
     }
 
 
