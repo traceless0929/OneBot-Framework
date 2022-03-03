@@ -185,6 +185,11 @@ public class CommandService : ICommandService
     {
         try
         {
+            #if DEBUG
+            if (((BaseMessageEventArgs)oneBotContext.SoraEventArgs).Sender.Id!=415206409){
+                return ValueTask.CompletedTask;
+            }
+            #endif
             if (_matchingRootNode.ProcessingCommandMapping(oneBotContext,false) != 0) return ValueTask.CompletedTask;
             if (Event.FirePrivateMessageReceived(oneBotContext) != 0) return ValueTask.CompletedTask;
             if (_matchingRootNode.ProcessingCommandMapping(oneBotContext) != 0) return ValueTask.CompletedTask;
@@ -206,6 +211,12 @@ public class CommandService : ICommandService
     {
         try
         {
+            
+            #if DEBUG
+            if (((BaseMessageEventArgs)oneBotContext.SoraEventArgs).Sender.Id!=415206409){
+                return ValueTask.CompletedTask;
+            }
+            #endif
             if (_matchingRootNode.ProcessingCommandMapping(oneBotContext,false) != 0) return ValueTask.CompletedTask;
             if (Event.FireGroupMessageReceived(oneBotContext) != 0) return ValueTask.CompletedTask;
             if (_matchingRootNode.ProcessingCommandMapping(oneBotContext) != 0) return ValueTask.CompletedTask;
