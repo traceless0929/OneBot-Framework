@@ -23,12 +23,10 @@ public class CQJsonRouterController : IOneBotController
     {
         _routeService = null!;
         var routeService = serviceProvider.GetService<ICQJsonRouterService>();
-        if (routeService != null)
-        {
-            _routeService = routeService;
-            commandService.Event.OnGroupMessageReceived += EventOnGroupMessageReceived;
-            commandService.Event.OnPrivateMessageReceived += EventOnPrivateMessageReceived;
-        }
+        if (routeService == null) return;
+        _routeService = routeService;
+        commandService.Event.OnGroupMessageReceived += EventOnGroupMessageReceived;
+        commandService.Event.OnPrivateMessageReceived += EventOnPrivateMessageReceived;
     }
 
     private int EventOnGroupMessageReceived(OneBotContext scope)
