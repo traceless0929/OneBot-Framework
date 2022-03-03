@@ -8,6 +8,7 @@
   <component name="ChangeListManager">
     <list default="true" id="81e29871-f581-4b45-9e69-5d4ca09a8c98" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.OneBot-Framework/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.OneBot-Framework/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/OneBot-Framework-Demo/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/OneBot-Framework-Demo/.gitignore" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -93,6 +94,7 @@
       <workItem from="1642410568635" duration="323000" />
       <workItem from="1642750356454" duration="467000" />
       <workItem from="1644549192791" duration="972000" />
+      <workItem from="1646278386258" duration="775000" />
     </task>
     <task id="LOCAL-00001" summary="合并升级主版本">
       <created>1629194463989</created>
